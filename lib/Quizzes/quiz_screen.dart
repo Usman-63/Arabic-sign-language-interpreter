@@ -4,7 +4,7 @@ import 'package:sign_language_interpreter/background_icons.dart';
 
 class QuizScreen extends StatefulWidget {
   final VoidCallback? onBack;
-  QuizScreen({super.key, this.onBack});
+  const QuizScreen({super.key, this.onBack});
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();
@@ -245,11 +245,11 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                 const SizedBox(height: 24),
                                 ElevatedButton(
                                   onPressed: _startQuiz,
-                                  child: const Text('Restart'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF7E22CE),
                                     foregroundColor: Colors.white,
                                   ),
+                                  child: const Text('Restart'),
                                 ),
                               ],
                             )
@@ -269,11 +269,11 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                 const SizedBox(height: 32),
                                 ElevatedButton(
                                   onPressed: _startQuiz,
-                                  child: const Text('Start Quiz'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: const Color(0xFF7E22CE),
                                     foregroundColor: Colors.white,
                                   ),
+                                  child: const Text('Start Quiz'),
                                 ),
                               ],
                             )

@@ -6,7 +6,7 @@ import 'package:sign_language_interpreter/home/graph_screen.dart';
 import '../alphabets/alphabet_screen.dart';
 import '../phrases/phrases_screen.dart';
 import '../Quizzes/quiz_screen.dart';
-import '../recognition_screen.dart';
+import '../recognition/recognition_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -136,7 +136,7 @@ class _HomeContentState extends State<HomeContent> {
                       size.height >= 800
                           ? size.height * 0.25
                           : size.height *
-                              0.29, // Increased for better collapse effect
+                              0.24, // Increased for better collapse effect
                   floating: false,
                   pinned: false,
                   flexibleSpace: FlexibleSpaceBar(

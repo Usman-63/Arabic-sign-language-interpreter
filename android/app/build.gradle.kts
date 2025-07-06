@@ -24,8 +24,8 @@ android {
         applicationId = "com.example.sign_language_interpreter"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        minSdk = 24
+        targetSdk = 33
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -38,6 +38,19 @@ android {
         }
     }
 }
+dependencies {
+    implementation("com.google.mediapipe:tasks-vision:latest.release")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.24")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.code.gson:gson:2.10.1")
+    implementation("androidx.camera:camera-core:1.4.1")
+    implementation("androidx.camera:camera-lifecycle:1.4.1")
+    implementation("androidx.camera:camera-view:1.4.1")
+    implementation("androidx.activity:activity-ktx:1.10.1")
+    implementation("com.google.ar:core:1.48.0")
+
+}
+
 
 flutter {
     source = "../.."

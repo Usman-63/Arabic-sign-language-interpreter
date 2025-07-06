@@ -3,7 +3,7 @@ import 'package:sign_language_interpreter/background_icons.dart'; // <-- Add thi
 
 class PhrasesScreen extends StatefulWidget {
   final VoidCallback? onBack;
-  PhrasesScreen({super.key, this.onBack});
+  const PhrasesScreen({super.key, this.onBack});
 
   @override
   State<PhrasesScreen> createState() => _PhrasesScreenState();
@@ -137,8 +137,8 @@ class _PhrasesScreenState extends State<PhrasesScreen>
 
                 expandedHeight:
                     size.height >= 800
-                        ? size.height * 0.25
-                          : size.height * 0.35,
+                        ? size.height * 0.18
+                          : size.height * 0.12,
                 floating: false,
                 pinned: true,
                 backgroundColor: Colors.transparent,

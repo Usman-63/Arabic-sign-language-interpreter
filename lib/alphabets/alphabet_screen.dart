@@ -3,7 +3,7 @@ import 'package:sign_language_interpreter/background_icons.dart'; // <-- Add thi
 
 class AlphabetScreen extends StatefulWidget {
   final VoidCallback? onBack;
-  AlphabetScreen({super.key, this.onBack});
+  const AlphabetScreen({super.key, this.onBack});
 
   @override
   State<AlphabetScreen> createState() => _AlphabetScreenState();
@@ -132,8 +132,8 @@ class _AlphabetScreenState extends State<AlphabetScreen>
 
                 expandedHeight:
                     size.height >= 800
-                        ? size.height * 0.25
-                        : size.height * 0.35,
+                        ? size.height * 0.18
+                        : size.height * 0.12,
                 floating: false,
                 pinned: true,
                 backgroundColor: Colors.transparent,
