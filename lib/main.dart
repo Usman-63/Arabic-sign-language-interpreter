@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:sign_language_interpreter/theme_data.dart';
 import 'splash_screen.dart';
 
-void main() {
+void main() async {
   runApp(const ArabicSignApp());
 }
 

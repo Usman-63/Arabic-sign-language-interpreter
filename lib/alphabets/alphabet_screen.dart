@@ -86,7 +86,7 @@ class _AlphabetScreenState extends State<AlphabetScreen>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final double letterFontSize = size.width / 10;
-    final double nameFontSize = size.width / 40;
+    final double nameFontSize = size.width / 44;
 
     return Scaffold(
       body: Stack(
@@ -230,8 +230,8 @@ class _AlphabetScreenState extends State<AlphabetScreen>
                 sliver: SliverGrid(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
-                    mainAxisSpacing: 20,
-                    crossAxisSpacing: 20,
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
                     childAspectRatio: 1,
                   ),
                   delegate: SliverChildBuilderDelegate((context, index) {
@@ -244,7 +244,7 @@ class _AlphabetScreenState extends State<AlphabetScreen>
                       ),
                       child: Center(
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             Center(
                               child: Text(
@@ -256,7 +256,7 @@ class _AlphabetScreenState extends State<AlphabetScreen>
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 5),
                             Center(
                               child: Text(
                                 letter['name']!,

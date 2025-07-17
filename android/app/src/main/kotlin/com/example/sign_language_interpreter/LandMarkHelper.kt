@@ -13,7 +13,7 @@ import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
 
-class HandLandMarkHelper(
+class LandMarkHelper(
     var runningMode: RunningMode = RunningMode.LIVE_STREAM,
     val context: Context,
     val handLandmarkerHelperListener: LandmarkerListener? = null,

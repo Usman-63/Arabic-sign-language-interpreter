@@ -1,5 +1,8 @@
 plugins {
     id("com.android.application")
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services")
+    // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
@@ -35,19 +38,21 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
 }
 dependencies {
-    implementation("com.google.mediapipe:tasks-vision:latest.release")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.24")
-    implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("com.google.code.gson:gson:2.10.1")
-    implementation("androidx.camera:camera-core:1.4.1")
-    implementation("androidx.camera:camera-lifecycle:1.4.1")
-    implementation("androidx.camera:camera-view:1.4.1")
+    implementation("com.google.mediapipe:tasks-vision:latest.release") // ✅ Keep this for MediaPipe Tasks
+    implementation("org.tensorflow:tensorflow-lite:2.16.1")             // ✅ Your real TensorFlow Lite for custom model
+    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
+    implementation("androidx.appcompat:appcompat:1.7.1")
+    implementation("androidx.camera:camera-core:1.4.2")
+    implementation("androidx.camera:camera-camera2:1.4.2")
+    implementation("androidx.camera:camera-lifecycle:1.4.2")
+    implementation("androidx.camera:camera-view:1.4.2")
     implementation("androidx.activity:activity-ktx:1.10.1")
-    implementation("com.google.ar:core:1.48.0")
 
 }
 

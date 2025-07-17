@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sign_language_interpreter/background_icons.dart';
+import 'package:sign_language_interpreter/recognition/camera_select.dart';
 import 'package:sign_language_interpreter/recognition/recognition_camera.dart';
-import 'package:sign_language_interpreter/recognition/recognition_model.dart';
 
 class RecognitionScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -12,20 +11,17 @@ class RecognitionScreen extends StatefulWidget {
 }
 
 class _RecognitionScreenState extends State<RecognitionScreen> {
-  late RecognitionModelController _modelController;
   late RecognitionCameraXController _cameraController;
 
   String? _cameraError;
   bool _isStreaming = false;
-  String? _recognizedSign;
+  String? _recognizedSignLabel = "No sign recognized";
+  String? _recognizedSignConfidence = "N/A";
+  String? _cameraDiretion;
 
   @override
   void initState() {
     super.initState();
-    _modelController = RecognitionModelController();
-    _modelController.initModel().then((_) {
-      setState(() {});
-    });
 
     _cameraController = RecognitionCameraXController();
     _cameraController.setResultHandler((result) {
@@ -36,18 +32,32 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
         });
       } else {
         setState(() {
-          _recognizedSign = result.toString();
-          print('Recognized sign: ${_recognizedSign}');
-          _isStreaming = false;
+          _recognizedSignLabel =
+              result['label']?.toString() ?? 'No sign recognized';
+          _recognizedSignConfidence = result['confidence']?.toString() ?? 'N/A';
         });
       }
     });
   }
 
+  Future cameraSelect() {
+    return showDialog(
+      context: context,
+      builder:
+          (context) => SelectCamera(
+            onCameraSelected: (String direction) {
+              setState(() {
+                _cameraDiretion = direction;
+              });
+            },
+          ),
+    );
+  }
+
   @override
   void dispose() {
-    _modelController.dispose();
     super.dispose();
+    _cameraController.dispose();
   }
 
   @override
@@ -56,33 +66,6 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
     final double titleFontSize = size.width / 18;
     final double subtitleFontSize = size.width / 24;
     final double iconFontSize = size.width / 12;
-
-    final List<BackgroundIconData> decorativeIcons = [
-      BackgroundIconData(
-        icon: Icons.front_hand,
-        size: size.width / 3.5,
-        angle: 0.2,
-        left: -30,
-        top: 120,
-        color: Colors.deepPurple.withOpacity(0.07),
-      ),
-      BackgroundIconData(
-        icon: Icons.pan_tool_alt_rounded,
-        size: size.width / 2.5,
-        angle: -0.4,
-        right: -60,
-        top: 300,
-        color: Colors.deepPurpleAccent.withOpacity(0.06),
-      ),
-      BackgroundIconData(
-        icon: Icons.back_hand,
-        size: size.width / 5,
-        angle: 0.7,
-        left: 80,
-        bottom: 100,
-        color: Colors.deepPurple.withOpacity(0.05),
-      ),
-    ];
 
     return Scaffold(
       body: LayoutBuilder(
@@ -107,22 +90,32 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
                       ),
                     )
                     : ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(20),
                       child: SizedBox(
-                        height: constraints.maxHeight * 0.68,
+                        height: constraints.maxHeight * 0.65,
                         width: double.infinity,
-                        child: CameraXView(),
+                        child:
+                            _cameraDiretion == null
+                                ? Center(
+                                  child: ElevatedButton(
+                                    onPressed: cameraSelect,
+                                    child: const Text('Select Camera'),
+                                  ),
+                                )
+                                : CameraXView(cameraFacing: _cameraDiretion!),
                       ),
                     ),
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(10.0),
                   child: ElevatedButton.icon(
                     onPressed:
-                        !_isStreaming
+                        (_cameraDiretion == null)
+                            ? null
+                            : !_isStreaming
                             ? () async {
                               setState(() {
                                 _isStreaming = true;
-                                _recognizedSign = null;
+                                _recognizedSignLabel = "No sign recognized";
                               });
                               await _cameraController.startDetection();
                             }
@@ -146,7 +139,7 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 1),
                 if (_isStreaming)
                   Text(
                     'Detecting...',
@@ -156,7 +149,7 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
                       fontSize: subtitleFontSize,
                     ),
                   ),
-                if (!_isStreaming && _recognizedSign != null)
+                if (!_isStreaming && _recognizedSignLabel != null)
                   Text(
                     'Detection complete.',
                     style: TextStyle(
@@ -179,7 +172,7 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
                       size: iconFontSize,
                     ),
                     title: Text(
-                      'Recognized Sign:',
+                      'Recognized Sign: ',
                       style: TextStyle(
                         color: const Color(0xFF7E22CE),
                         fontWeight: FontWeight.bold,
@@ -187,7 +180,7 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
                       ),
                     ),
                     subtitle: Text(
-                      _recognizedSign ?? '(No result yet)',
+                      "$_recognizedSignLabel  $_recognizedSignConfidence",
                       style: TextStyle(
                         color: const Color(0xFF5B21B6),
                         fontSize: subtitleFontSize,

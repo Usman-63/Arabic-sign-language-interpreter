@@ -138,7 +138,7 @@ class _PhrasesScreenState extends State<PhrasesScreen>
                 expandedHeight:
                     size.height >= 800
                         ? size.height * 0.18
-                          : size.height * 0.12,
+                        : size.height * 0.12,
                 floating: false,
                 pinned: true,
                 backgroundColor: Colors.transparent,

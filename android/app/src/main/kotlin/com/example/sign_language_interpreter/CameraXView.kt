@@ -1,6 +1,8 @@
-package com.example.demo
+package com.example.sign_language_interpreter
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
@@ -12,7 +14,6 @@ import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import com.example.sign_language_interpreter.HandLandMarkHelper
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
@@ -24,32 +25,37 @@ import java.util.concurrent.ExecutorService
 class CameraXView(
     private val context: Context,
     messenger: BinaryMessenger,
-    private val lifecycleOwner: LifecycleOwner
+    private val lifecycleOwner: LifecycleOwner,
+    creationParams: Map<String?, Any?>?
 ) : PlatformView,
     MethodChannel.MethodCallHandler,
-    HandLandMarkHelper.LandmarkerListener,
-    DefaultLifecycleObserver {
+    LandMarkHelper.LandmarkerListener,
 
+    DefaultLifecycleObserver {
+    private val cameraFacing = creationParams?.get("cameraFacing") as? String ?: "back"
     private val channel = MethodChannel(messenger, "camerax_channel")
     private val cameraExecutor = Executors.newSingleThreadExecutor()
     private var camera: Camera? = null
     private val previewView = PreviewView(context)
     private var analysisUseCase: ImageAnalysis? = null
     private var isDetectionActive=false
+    private val alphabetRecognizer = AlphabetRecognize(context)
+    private val detectionLock = Any()
 
     // Background executor for MediaPipe operations
     private val backgroundExecutor: ExecutorService = Executors.newSingleThreadExecutor()
 
     // Initialize the MediaPipe helper in LIVE_STREAM mode, passing this as the listener.
-    private lateinit var handLandMarkHelper: HandLandMarkHelper
+    private lateinit var landMarkHelper: LandMarkHelper
 
     init {
         channel.setMethodCallHandler(this)
         // Instantiate MediaPipeHelper with LIVE_STREAM mode and listener.
-        handLandMarkHelper = HandLandMarkHelper(
+        landMarkHelper = LandMarkHelper(
             context = context,
             runningMode = RunningMode.LIVE_STREAM,
-            handLandmarkerHelperListener = this
+            handLandmarkerHelperListener = this,
+
         )
         initializeCamera()
         lifecycleOwner.lifecycle.addObserver(this)
@@ -62,7 +68,7 @@ class CameraXView(
 
             // Setup preview use case.
             val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(previewView.surfaceProvider)
+                it.surfaceProvider = previewView.surfaceProvider
             }
 
             // Setup image analysis use case.
@@ -76,8 +82,11 @@ class CameraXView(
                         // Do NOT close image here because detectLiveStream() handles it.
                     })
                 }
-
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            val cameraSelector = if (cameraFacing == "front") {
+                CameraSelector.DEFAULT_FRONT_CAMERA
+            } else {
+                CameraSelector.DEFAULT_BACK_CAMERA
+            }
 
             try {
                 cameraProvider.unbindAll()
@@ -97,8 +106,8 @@ class CameraXView(
     // Lifecycle callback: when resumed, ensure the hand landmarker is set up.
     override fun onResume(owner: LifecycleOwner) {
         backgroundExecutor.execute {
-            if (handLandMarkHelper.isClose()) {
-                handLandMarkHelper.setupHandLandmarker()
+            if (landMarkHelper.isClose()) {
+                landMarkHelper.setupHandLandmarker()
             }
         }
     }
@@ -106,64 +115,93 @@ class CameraXView(
     // Lifecycle callback: when paused, clear the hand landmarker to free resources.
     override fun onPause(owner: LifecycleOwner) {
         backgroundExecutor.execute {
-            handLandMarkHelper.clearHandLandmarker()
+            landMarkHelper.clearHandLandmarker()
         }
     }
 
 
     override fun getView() = previewView
 
-    // Process each camera frame.
-    private fun processFrame(image: ImageProxy) {
-        // For a back camera, isFrontCamera is false.
-        if( !isDetectionActive ) {
-            image.close() // Close the image if detection is not active.
-            return
-        }
-        try {
-            handLandMarkHelper.detectLiveStream(image, isFrontCamera = false)
-        } catch (e: Exception) {
-            Log.e("CameraXView", "Error processing frame: ${e.message}")
-            // If detectLiveStream throws an error, you can handle it or notify Flutter.
+  private fun processFrame(image: ImageProxy) {
+        synchronized(detectionLock) {
+            if (!isDetectionActive || landMarkHelper.isClose()) {
+                image.close()
+                return
+            }
+            
+            try {
+                backgroundExecutor.execute {
+                    landMarkHelper.detectLiveStream(image, isFrontCamera = true)
+                }
+            } catch (e: Exception) {
+                Log.e("CameraXView", "Frame processing error", e)
+                image.close()
+            }
         }
     }
 
 
 
-    override fun dispose() {
-        analysisUseCase?.clearAnalyzer()
+  override fun dispose() {
+        synchronized(detectionLock) {
+            isDetectionActive = false
+            analysisUseCase?.clearAnalyzer()
+            landMarkHelper.clearHandLandmarker()
+        }
         cameraExecutor.shutdown()
         backgroundExecutor.shutdown()
-        channel.setMethodCallHandler(null)
-        lifecycleOwner.lifecycle.removeObserver(this)
-        handLandMarkHelper.clearHandLandmarker()
-        isDetectionActive = false
+
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
-        when (call.method) {
-            "startDetection" -> {
-                if (!isDetectionActive) {
-                    isDetectionActive = true
-                    handLandMarkHelper.setupHandLandmarker()
-                    result.success("Detection started")
-                } else {
-                    result.error("ALREADY_ACTIVE", "Detection is already active", null)
-                }
+    when (call.method) {
+        "dispose" ->{
+            synchronized(detectionLock){
+                dispose()
             }
-            "stopDetection" -> {
-                if (isDetectionActive) {
-                    isDetectionActive = false
-                    handLandMarkHelper.clearHandLandmarker()
-                    result.success("Detection stopped")
-                } else {
-                    result.error("NOT_ACTIVE", "Detection is not active", null)
-                }
-            }
+        }
 
+        "startDetection" -> {
+            synchronized(detectionLock) {
+                if (!isDetectionActive) {
+                    try {
+                        isDetectionActive = true
+                        landMarkHelper.setupHandLandmarker()
+                        bindAnalyzer()
+                        result.success("Detection started")
+                    } catch (e: Exception) {
+                        isDetectionActive = false
+                        result.error("START_FAILED", e.message, null)
+                    }
+                }
+            }
+        }
+        
+        "stopDetection" -> {
+            synchronized(detectionLock) {
+                if (isDetectionActive) {
+                    try {
+                        isDetectionActive = false
+                        unbindAnalyzer()
+                        landMarkHelper.clearHandLandmarker()
+                        result.success("Detection stopped")
+                    } catch (e: Exception) {
+                        result.error("STOP_FAILED", e.message, null)
+                    }
+                }
+            }
         }
     }
+}
+    private fun bindAnalyzer() {
+        analysisUseCase?.setAnalyzer(cameraExecutor, FrameAnalyzer { image ->
+            processFrame(image)
+        })
+    }
 
+    private fun unbindAnalyzer() {
+        analysisUseCase?.clearAnalyzer()
+    }
 
     private class FrameAnalyzer(
         private val onFrame: (ImageProxy) -> Unit
@@ -180,10 +218,26 @@ class CameraXView(
     }
 
     // Callback from MediapipeHelper when hand landmark results are available.
-    override fun onResults(resultBundle: HandLandMarkHelper.ResultBundle) {
-        Log.d("CameraXView", "Hand landmarks detected: ${resultBundle.combinedLandmarks}")
+    override fun onResults(resultBundle: LandMarkHelper.ResultBundle) {
+        if (!isDetectionActive) return
 
-        // Optionally, send these results to Flutter using:
-        // channel.invokeMethod("onResults", resultData)
+        val predictionMap = alphabetRecognizer.addFrame(resultBundle.landmarks.toFloatArray())
+
+        // Only send results if we have a valid prediction
+        predictionMap?.let {
+            val resultMap = mapOf(
+                "landmarks" to resultBundle.landmarks,
+                "inferenceTime" to resultBundle.inferenceTime,
+                "inputImageHeight" to resultBundle.inputImageHeight,
+                "inputImageWidth" to resultBundle.inputImageWidth,
+                "label" to it["label"],
+                "confidence" to it["confidence"]
+            )
+
+            Handler(Looper.getMainLooper()).post {
+                channel.invokeMethod("onResults", resultMap)
+            }
+        }
     }
-}
+
+    }

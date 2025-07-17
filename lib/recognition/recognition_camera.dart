@@ -1,10 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class RecognitionCameraXController {
   static const MethodChannel _channel = MethodChannel('camerax_channel');
 
-  /// Listen for results from native (hand landmarks, errors, etc.)
   void setResultHandler(Function(dynamic) handler) {
     _channel.setMethodCallHandler((call) async {
       if (call.method == 'onResults') {
@@ -15,23 +15,79 @@ class RecognitionCameraXController {
     });
   }
 
-  /// Start detection (if you implement this on the Kotlin side)
   Future<void> startDetection() async {
     await _channel.invokeMethod('startDetection');
   }
 
-  /// Stop detection (if you implement this on the Kotlin side)
   Future<void> stopDetection() async {
     await _channel.invokeMethod('stopDetection');
   }
+
+  Future<void> dispose() async {
+    await _channel.invokeMethod('dispose');
+  }
 }
 
-/// Widget to display the native CameraX preview
-class CameraXView extends StatelessWidget {
-  const CameraXView({super.key});
+class CameraXView extends StatefulWidget {
+  final String cameraFacing;
+  const CameraXView({super.key, required this.cameraFacing});
+
+  @override
+  State<CameraXView> createState() => _CameraXViewState();
+}
+
+class _CameraXViewState extends State<CameraXView> {
+  late Future<bool> _permissionFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _permissionFuture = checkCameraPermission();
+  }
+
+  Future<bool> checkCameraPermission() async {
+    var status = await Permission.camera.status;
+    if (!status.isGranted) {
+      status = await Permission.camera.request();
+    }
+    return status.isGranted;
+  }
+
+  void _requestPermissionAndReload() async {
+    if (await checkCameraPermission()) {
+      setState(() {
+        _permissionFuture = Future.value(true);
+      });
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Camera permission denied')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AndroidView(viewType: 'camerax_view',);
+    return FutureBuilder(
+      future: _permissionFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.data == true) {
+          return AndroidView(
+            viewType: 'camerax_view',
+            creationParams: {'cameraFacing': widget.cameraFacing},
+            creationParamsCodec: const StandardMessageCodec(),
+          );
+        } else {
+          return Center(
+            child: ElevatedButton(
+              onPressed: _requestPermissionAndReload,
+              child: const Text('Grant Camera Permission'),
+            ),
+          );
+        }
+      },
+    );
   }
 }
