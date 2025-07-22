@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:sign_language_interpreter/background_icons.dart'; // <-- Add this import
+import 'dart:convert';
+import 'package:flutter/services.dart';
+import 'package:sign_language_interpreter/alphabets/alphabets.dart';
+import 'package:sign_language_interpreter/background_icons.dart';
 
 class AlphabetScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -15,46 +18,7 @@ class _AlphabetScreenState extends State<AlphabetScreen>
   String _searchQuery = '';
   late AnimationController _animationController;
 
-  final List<Map<String, String>> letters = const [
-    {'char': 'ا', 'name': 'Alif'},
-    {'char': 'ب', 'name': 'Ba'},
-    {'char': 'ت', 'name': 'Ta'},
-    {'char': 'ث', 'name': 'Tha'},
-    {'char': 'ج', 'name': 'Jeem'},
-    {'char': 'ح', 'name': 'Ha'},
-    {'char': 'خ', 'name': 'Kha'},
-    {'char': 'د', 'name': 'Dal'},
-    {'char': 'ذ', 'name': 'Dhal'},
-    {'char': 'ر', 'name': 'Ra'},
-    {'char': 'ز', 'name': 'Zay'},
-    {'char': 'س', 'name': 'Seen'},
-    {'char': 'ش', 'name': 'Sheen'},
-    {'char': 'ص', 'name': 'Sad'},
-    {'char': 'ض', 'name': 'Dad'},
-    {'char': 'ط', 'name': 'Taa'},
-    {'char': 'ظ', 'name': 'Zaa'},
-    {'char': 'ع', 'name': 'Ayn'},
-    {'char': 'غ', 'name': 'Ghayn'},
-    {'char': 'ف', 'name': 'Fa'},
-    {'char': 'ق', 'name': 'Qaf'},
-    {'char': 'ك', 'name': 'Kaf'},
-    {'char': 'ل', 'name': 'Lam'},
-    {'char': 'م', 'name': 'Meem'},
-    {'char': 'ن', 'name': 'Noon'},
-    {'char': 'ه', 'name': 'Ha'},
-    {'char': 'و', 'name': 'Waw'},
-    {'char': 'ي', 'name': 'Ya'},
-    {'char': 'ال', 'name': 'Al'},
-    {'char': 'ء', 'name': 'Hamza'},
-    {'char': 'ة', 'name': 'Taa Marbuuta'},
-    {'char': 'أ', 'name': 'Alif Hamza Above'},
-    {'char': 'ؤ', 'name': 'Waaw Hamza'},
-    {'char': 'ئ', 'name': 'Alif Maqsura Hamza'},
-    {'char': 'ئـ', 'name': 'Hamza Line'},
-    {'char': 'إ', 'name': 'Alif Hamza Below'},
-    {'char': 'آ', 'name': 'Alif Maad'},
-    {'char': 'لا', 'name': 'Laam Alif'},
-  ];
+  List<Map<String, dynamic>> _jsonAlphabets = [];
 
   @override
   void initState() {
@@ -64,6 +28,17 @@ class _AlphabetScreenState extends State<AlphabetScreen>
       vsync: this,
     );
     _animationController.forward();
+    _loadJson();
+  }
+
+  Future<void> _loadJson() async {
+    final String jsonString = await rootBundle.loadString(
+      'assets/quiz_json.json',
+    );
+    final Map<String, dynamic> jsonData = json.decode(jsonString);
+    setState(() {
+      _jsonAlphabets = List<Map<String, dynamic>>.from(jsonData['alphabets']);
+    });
   }
 
   @override
@@ -73,13 +48,136 @@ class _AlphabetScreenState extends State<AlphabetScreen>
     super.dispose();
   }
 
-  List<Map<String, String>> get filteredLetters {
-    return letters.where((letter) {
+  List<Map<String, dynamic>> get filteredLetters {
+    return _jsonAlphabets.where((letter) {
       final matchesSearch =
-          letter['name']!.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          letter['char']!.contains(_searchQuery);
+          letter['name'].toString().toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ) ||
+          letter['char'].toString().contains(_searchQuery);
       return matchesSearch;
     }).toList();
+  }
+
+  void _showDemoImage(BuildContext context, String id) {
+    final images = signAlphabetDemoImages[id];
+    if (images == null || images.isEmpty) return;
+
+    int selectedIndex = 0;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder:
+              (context, setState) => Dialog(
+                backgroundColor: Colors.transparent,
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: Colors.white,
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Stack(
+                    children: [
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              images[selectedIndex],
+                              fit: BoxFit.contain,
+                              loadingBuilder: (
+                                context,
+                                child,
+                                loadingProgress,
+                              ) {
+                                if (loadingProgress == null) return child;
+                                return SizedBox(
+                                  height: 200,
+                                  child: Center(
+                                    child: CircularProgressIndicator(
+                                      value:
+                                          loadingProgress.expectedTotalBytes !=
+                                                  null
+                                              ? loadingProgress
+                                                      .cumulativeBytesLoaded /
+                                                  loadingProgress
+                                                      .expectedTotalBytes!
+                                              : null,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            children: List.generate(images.length, (index) {
+                              return GestureDetector(
+                                onTap:
+                                    () => setState(() {
+                                      selectedIndex = index;
+                                    }),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      images[index],
+                                      width: 48,
+                                      height: 48,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                        ],
+                      ),
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: IconButton(
+                          icon: const Icon(
+                            Icons.info_outline,
+                            color: Colors.grey,
+                          ),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder:
+                                  (context) => AlertDialog(
+                                    title: const Text("Dataset Attribution"),
+                                    content: const Text(
+                                      "Images are used from:\n\n"
+                                      "• ArASL Dataset by Ganna Yasser\n"
+                                      "• RGB ArSL Dataset by Muhammad Albrham\n\n"
+                                      "Sourced via Kaggle for educational and demo use.",
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text("Close"),
+                                      ),
+                                    ],
+                                  ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+        );
+      },
+    );
   }
 
   @override
@@ -129,7 +227,6 @@ class _AlphabetScreenState extends State<AlphabetScreen>
                   onPressed:
                       widget.onBack ?? () => Navigator.of(context).maybePop(),
                 ),
-
                 expandedHeight:
                     size.height >= 800
                         ? size.height * 0.18
@@ -160,7 +257,7 @@ class _AlphabetScreenState extends State<AlphabetScreen>
                           ),
                         ),
                       ),
-                      // AppBar-specific icons (optional, or remove if you want only global icons)
+                      // AppBar-specific icons
                       BackgroundIcons(
                         icons: [
                           BackgroundIconData(
@@ -189,7 +286,6 @@ class _AlphabetScreenState extends State<AlphabetScreen>
                           ),
                         ],
                       ),
-                      // Optional: subtle overlay for depth
                       Container(color: Colors.black.withOpacity(0.04)),
                     ],
                   ),
@@ -242,32 +338,36 @@ class _AlphabetScreenState extends State<AlphabetScreen>
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Center(
-                              child: Text(
-                                letter['char']!,
-                                style: TextStyle(
-                                  color: const Color(0xFF7E22CE),
-                                  fontSize: letterFontSize,
-                                  fontWeight: FontWeight.bold,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () => _showDemoImage(context, letter['id']),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Center(
+                                child: Text(
+                                  letter['char'],
+                                  style: TextStyle(
+                                    color: const Color(0xFF7E22CE),
+                                    fontSize: letterFontSize,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 5),
-                            Center(
-                              child: Text(
-                                letter['name']!,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: nameFontSize,
-                                  color: const Color(0xFF7E22CE),
+                              const SizedBox(height: 5),
+                              Center(
+                                child: Text(
+                                  letter['name'],
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: nameFontSize,
+                                    color: const Color(0xFF7E22CE),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     );

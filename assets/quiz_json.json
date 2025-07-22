@@ -1,0 +1,382 @@
+{
+  "alphabets": [
+    {
+      "id": "alif",
+      "char": "ا",
+      "name": "Alif",
+      "name_english": "Alif",
+      "image_path": "assets/images/signs/alphabet/alif.png"
+    },
+    {
+      "id": "ba",
+      "char": "ب",
+      "name": "Ba",
+      "name_english": "Ba",
+      "image_path": "assets/images/signs/alphabet/ba.png"
+    },
+    {
+      "id": "ta",
+      "char": "ت",
+      "name": "Ta",
+      "name_english": "Ta",
+      "image_path": "assets/images/signs/alphabet/ta.png"
+    },
+    {
+      "id": "tha",
+      "char": "ث",
+      "name": "Tha",
+      "name_english": "Tha",
+      "image_path": "assets/images/signs/alphabet/tha.png"
+    },
+    {
+      "id": "jeem",
+      "char": "ج",
+      "name": "Jeem",
+      "name_english": "Jeem",
+      "image_path": "assets/images/signs/alphabet/jeem.png"
+    },
+    {
+      "id": "ha",
+      "char": "ح",
+      "name": "Ha",
+      "name_english": "Ha",
+      "image_path": "assets/images/signs/alphabet/ha.png"
+    },
+    {
+      "id": "kha",
+      "char": "خ",
+      "name": "Kha",
+      "name_english": "Kha",
+      "image_path": "assets/images/signs/alphabet/kha.png"
+    },
+    {
+      "id": "dal",
+      "char": "د",
+      "name": "Dal",
+      "name_english": "Dal",
+      "image_path": "assets/images/signs/alphabet/dal.png"
+    },
+    {
+      "id": "dhal",
+      "char": "ذ",
+      "name": "Dhal",
+      "name_english": "Dhal",
+      "image_path": "assets/images/signs/alphabet/dhal.png"
+    },
+    {
+      "id": "ra",
+      "char": "ر",
+      "name": "Ra",
+      "name_english": "Ra",
+      "image_path": "assets/images/signs/alphabet/ra.png"
+    },
+    {
+      "id": "zay",
+      "char": "ز",
+      "name": "Zay",
+      "name_english": "Zay",
+      "image_path": "assets/images/signs/alphabet/zay.png"
+    },
+    {
+      "id": "seen",
+      "char": "س",
+      "name": "Seen",
+      "name_english": "Seen",
+      "image_path": "assets/images/signs/alphabet/seen.png"
+    },
+    {
+      "id": "sheen",
+      "char": "ش",
+      "name": "Sheen",
+      "name_english": "Sheen",
+      "image_path": "assets/images/signs/alphabet/sheen.png"
+    },
+    {
+      "id": "sad",
+      "char": "ص",
+      "name": "Sad",
+      "name_english": "Sad",
+      "image_path": "assets/images/signs/alphabet/sad.png"
+    },
+    {
+      "id": "dad",
+      "char": "ض",
+      "name": "Dad",
+      "name_english": "Dad",
+      "image_path": "assets/images/signs/alphabet/dad.png"
+    },
+    {
+      "id": "taa",
+      "char": "ط",
+      "name": "Taa",
+      "name_english": "Taa",
+      "image_path": "assets/images/signs/alphabet/taa.png"
+    },
+    {
+      "id": "zaa",
+      "char": "ظ",
+      "name": "Zaa",
+      "name_english": "Zaa",
+      "image_path": "assets/images/signs/alphabet/zaa.png"
+    },
+    {
+      "id": "ayn",
+      "char": "ع",
+      "name": "Ayn",
+      "name_english": "Ayn",
+      "image_path": "assets/images/signs/alphabet/ayn.png"
+    },
+    {
+      "id": "ghayn",
+      "char": "غ",
+      "name": "Ghayn",
+      "name_english": "Ghayn",
+      "image_path": "assets/images/signs/alphabet/ghayn.png"
+    },
+    {
+      "id": "fa",
+      "char": "ف",
+      "name": "Fa",
+      "name_english": "Fa",
+      "image_path": "assets/images/signs/alphabet/fa.png"
+    },
+    {
+      "id": "qaf",
+      "char": "ق",
+      "name": "Qaf",
+      "name_english": "Qaf",
+      "image_path": "assets/images/signs/alphabet/qaf.png"
+    },
+    {
+      "id": "kaf",
+      "char": "ك",
+      "name": "Kaf",
+      "name_english": "Kaf",
+      "image_path": "assets/images/signs/alphabet/kaf.png"
+    },
+    {
+      "id": "lam",
+      "char": "ل",
+      "name": "Lam",
+      "name_english": "Lam",
+      "image_path": "assets/images/signs/alphabet/lam.png"
+    },
+    {
+      "id": "meem",
+      "char": "م",
+      "name": "Meem",
+      "name_english": "Meem",
+      "image_path": "assets/images/signs/alphabet/meem.png"
+    },
+    {
+      "id": "noon",
+      "char": "ن",
+      "name": "Noon",
+      "name_english": "Noon",
+      "image_path": "assets/images/signs/alphabet/noon.png"
+    },
+    {
+      "id": "haaw",
+      "char": "هـ",
+      "name": "Haw",
+      "name_english": "Haw",
+      "image_path": "assets/images/signs/alphabet/ha_final.png"
+    },
+    {
+      "id": "waw",
+      "char": "و",
+      "name": "Waw",
+      "name_english": "Waw",
+      "image_path": "assets/images/signs/alphabet/waw.png"
+    },
+    {
+      "id": "ya",
+      "char": "ي",
+      "name": "Ya",
+      "name_english": "Ya",
+      "image_path": "assets/images/signs/alphabet/ya.png"
+    }
+  ],
+  "phrases": [
+    {
+      "id": "salam",
+      "english": "Salam",
+      "arabic": "السلام عليكم",
+      "category": "greetings",
+      "category_display": "Greetings",
+      "video_path": "assets/videos/signs/phrases/salam.mp4",
+      "difficulty": "easy"
+    },
+    {
+      "id": "alhamdulillah",
+      "english": "Alhamdulillah",
+      "arabic": "الحمد لله",
+      "category": "emotions",
+      "category_display": "Emotions",
+      "video_path": "assets/videos/signs/phrases/alhamdulillah.mp4",
+      "difficulty": "medium"
+    },
+    {
+      "id": "how_are_you",
+      "english": "How are you?",
+      "arabic": "كيف حالك؟",
+      "category": "questions",
+      "category_display": "Questions",
+      "video_path": "assets/videos/signs/phrases/how_are_you.mp4",
+      "difficulty": "easy"
+    },
+    {
+      "id": "i_am_fine",
+      "english": "I am fine",
+      "arabic": "أنا بخير",
+      "category": "emotions",
+      "category_display": "Emotions",
+      "video_path": "assets/videos/signs/phrases/i_am_fine.mp4",
+      "difficulty": "easy"
+    },
+    {
+      "id": "good_morning",
+      "english": "Good Morning",
+      "arabic": "صباح الخير",
+      "category": "greetings",
+      "category_display": "Greetings",
+      "video_path": "assets/videos/signs/phrases/good_morning.mp4",
+      "difficulty": "easy"
+    },
+    {
+      "id": "thanks",
+      "english": "Thanks",
+      "arabic": "شكراً",
+      "category": "courtesy",
+      "category_display": "Courtesy",
+      "video_path": "assets/videos/signs/phrases/thanks.mp4",
+      "difficulty": "easy"
+    },
+    {
+      "id": "what",
+      "english": "What",
+      "arabic": "ماذا؟",
+      "category": "questions",
+      "category_display": "Questions",
+      "video_path": "assets/videos/signs/phrases/what.mp4",
+      "difficulty": "easy"
+    }
+  ],
+  "question_templates": {
+    "alphabet": {
+      "sign_to_letter": {
+        "id": "sign_to_letter",
+        "name": "Sign to Letter",
+        "question_text": "What letter does this sign represent?",
+        "media_type": "image",
+        "has_media": true,
+        "has_display_text": false,
+        "answer_format": "letter_char",
+        "description": "Shows sign image and asks for the corresponding letter"
+      },
+      "letter_to_sign": {
+        "id": "letter_to_sign",
+        "name": "Letter to Sign",
+        "question_text": "Which sign represents this letter?",
+        "media_type": "none",
+        "has_media": false,
+        "has_display_text": true,
+        "answer_format": "sign_description",
+        "description": "Shows letter and asks which sign represents it"
+      },
+      "name_to_letter": {
+        "id": "name_to_letter",
+        "name": "Name to Letter",
+        "question_text": "What letter does '{name}' represent?",
+        "media_type": "none",
+        "has_media": false,
+        "has_display_text": true,
+        "answer_format": "letter_char",
+        "description": "Shows letter name and asks for the corresponding letter"
+      },
+      "letter_to_name": {
+        "id": "letter_to_name",
+        "name": "Letter to Name",
+        "question_text": "What is the name of this letter?",
+        "media_type": "none",
+        "has_media": false,
+        "has_display_text": true,
+        "answer_format": "letter_name",
+        "description": "Shows letter and asks for its name"
+      }
+    },
+    "phrase": {
+      "sign_to_english": {
+        "id": "sign_to_english",
+        "name": "Sign to English",
+        "question_text": "What does this sign mean in English?",
+        "media_type": "video",
+        "has_media": true,
+        "has_display_text": false,
+        "answer_format": "english_text",
+        "description": "Shows sign video and asks for English translation"
+      },
+      "arabic_to_english": {
+        "id": "arabic_to_english",
+        "name": "Arabic to English",
+        "question_text": "What does this Arabic phrase mean in English?",
+        "media_type": "none",
+        "has_media": false,
+        "has_display_text": true,
+        "answer_format": "english_text",
+        "description": "Shows Arabic text and asks for English translation"
+      },
+      "english_to_arabic": {
+        "id": "english_to_arabic",
+        "name": "English to Arabic",
+        "question_text": "How do you write this phrase in Arabic?",
+        "media_type": "none",
+        "has_media": false,
+        "has_display_text": true,
+        "answer_format": "arabic_text",
+        "description": "Shows English text and asks for Arabic translation"
+      },
+      "category_identification": {
+        "id": "category_identification",
+        "name": "Category Identification",
+        "question_text": "What category does this phrase belong to?",
+        "media_type": "none",
+        "has_media": false,
+        "has_display_text": true,
+        "answer_format": "category_name",
+        "description": "Shows phrase and asks for its category"
+      }
+    }
+  },
+  "quiz_settings": {
+    "default_total_questions": 10,
+    "alphabet_question_ratio": 0.6,
+    "phrase_question_ratio": 0.4,
+    "passing_score": 70,
+    "excellent_score": 85,
+    "good_score": 60,
+    "answer_delay_ms": 800,
+    "supported_difficulty_levels": ["easy", "medium", "hard"],
+    "default_difficulty": "mixed"
+  },
+  "scoring": {
+    "excellent": {
+      "min_percentage": 85,
+      "message": "Excellent! You're a sign language expert!",
+      "icon": "trophy",
+      "color": "amber"
+    },
+    "good": {
+      "min_percentage": 60,
+      "message": "Good job! Keep practicing!",
+      "icon": "thumbs_up",
+      "color": "green"
+    },
+    "needs_improvement": {
+      "min_percentage": 0,
+      "message": "Keep learning! Practice makes perfect!",
+      "icon": "school",
+      "color": "orange"
+    }
+  }
+}
