@@ -33,13 +33,17 @@ class CameraXView(
 
     DefaultLifecycleObserver {
     private val cameraFacing = creationParams?.get("cameraFacing") as? String ?: "back"
+    private val modelSelection = creationParams?.get("model") as? Boolean ?: false
     private val channel = MethodChannel(messenger, "camerax_channel")
     private val cameraExecutor = Executors.newSingleThreadExecutor()
     private var camera: Camera? = null
     private val previewView = PreviewView(context)
     private var analysisUseCase: ImageAnalysis? = null
     private var isDetectionActive=false
-    private val alphabetRecognizer = AlphabetRecognize(context)
+    private val recognizer = ModelRecognize(
+        context,
+        modelSelection =  modelSelection 
+    )
     private val detectionLock = Any()
 
     // Background executor for MediaPipe operations
@@ -55,6 +59,7 @@ class CameraXView(
             context = context,
             runningMode = RunningMode.LIVE_STREAM,
             handLandmarkerHelperListener = this,
+            modelSelection=modelSelection,
 
         )
         initializeCamera()
@@ -108,6 +113,8 @@ class CameraXView(
         backgroundExecutor.execute {
             if (landMarkHelper.isClose()) {
                 landMarkHelper.setupHandLandmarker()
+                if(modelSelection)
+                landMarkHelper.setupPoseLandmarker()
             }
         }
     }
@@ -115,7 +122,7 @@ class CameraXView(
     // Lifecycle callback: when paused, clear the hand landmarker to free resources.
     override fun onPause(owner: LifecycleOwner) {
         backgroundExecutor.execute {
-            landMarkHelper.clearHandLandmarker()
+            landMarkHelper.clearLandmarker()
         }
     }
 
@@ -131,7 +138,7 @@ class CameraXView(
             
             try {
                 backgroundExecutor.execute {
-                    landMarkHelper.detectLiveStream(image, isFrontCamera = true)
+                    landMarkHelper.detectLiveStream(image,isFrontCamera = (cameraFacing == "front"))
                 }
             } catch (e: Exception) {
                 Log.e("CameraXView", "Frame processing error", e)
@@ -146,7 +153,8 @@ class CameraXView(
         synchronized(detectionLock) {
             isDetectionActive = false
             analysisUseCase?.clearAnalyzer()
-            landMarkHelper.clearHandLandmarker()
+            landMarkHelper.clearLandmarker()
+            recognizer.close()
         }
         cameraExecutor.shutdown()
         backgroundExecutor.shutdown()
@@ -167,6 +175,8 @@ class CameraXView(
                     try {
                         isDetectionActive = true
                         landMarkHelper.setupHandLandmarker()
+                        if(modelSelection)
+                            landMarkHelper.setupPoseLandmarker()
                         bindAnalyzer()
                         result.success("Detection started")
                     } catch (e: Exception) {
@@ -183,7 +193,7 @@ class CameraXView(
                     try {
                         isDetectionActive = false
                         unbindAnalyzer()
-                        landMarkHelper.clearHandLandmarker()
+                        landMarkHelper.clearLandmarker()
                         result.success("Detection stopped")
                     } catch (e: Exception) {
                         result.error("STOP_FAILED", e.message, null)
@@ -220,13 +230,23 @@ class CameraXView(
     // Callback from MediapipeHelper when hand landmark results are available.
     override fun onResults(resultBundle: LandMarkHelper.ResultBundle) {
         if (!isDetectionActive) return
+        if(resultBundle.landmarks.all { it == 0f }) return
+        var combinedLandmarks=resultBundle.landmarks
 
-        val predictionMap = alphabetRecognizer.addFrame(resultBundle.landmarks.toFloatArray())
 
+       if(modelSelection){
+
+           combinedLandmarks=combinedLandmarks+ resultBundle.poseLandmarks
+           if(combinedLandmarks.size<162) return
+       }
+
+
+        val predictionMap = recognizer.addFrame(combinedLandmarks.toFloatArray())
+        println(message = "wordLabel is" + predictionMap?.get("label"))
         // Only send results if we have a valid prediction
         predictionMap?.let {
             val resultMap = mapOf(
-                "landmarks" to resultBundle.landmarks,
+                "landmarks" to combinedLandmarks,
                 "inferenceTime" to resultBundle.inferenceTime,
                 "inputImageHeight" to resultBundle.inputImageHeight,
                 "inputImageWidth" to resultBundle.inputImageWidth,
@@ -239,5 +259,6 @@ class CameraXView(
             }
         }
     }
+    
 
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sign_language_interpreter/recognition/camera_select.dart';
+import 'package:sign_language_interpreter/recognition/model_select.dart';
 import 'package:sign_language_interpreter/recognition/recognition_camera.dart';
 
 class RecognitionScreen extends StatefulWidget {
@@ -18,6 +19,7 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
   String? _recognizedSignLabel = "No sign recognized";
   String? _recognizedSignConfidence = "N/A";
   String? _cameraDiretion;
+  String? _selectedModel;
 
   @override
   void initState() {
@@ -34,6 +36,7 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
         setState(() {
           _recognizedSignLabel =
               result['label']?.toString() ?? 'No sign recognized';
+
           _recognizedSignConfidence = result['confidence']?.toString() ?? 'N/A';
         });
       }
@@ -46,9 +49,19 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
       builder:
           (context) => SelectCamera(
             onCameraSelected: (String direction) {
-              setState(() {
-                _cameraDiretion = direction;
-              });
+              Navigator.of(context).pop();
+              showDialog(
+                context: context,
+                builder:
+                    (context) => SelectModel(
+                      onModelSelected: (String model) {
+                        setState(() {
+                          _cameraDiretion = direction;
+                          _selectedModel = model;
+                        });
+                      },
+                    ),
+              );
             },
           ),
     );
@@ -95,21 +108,24 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
                         height: constraints.maxHeight * 0.65,
                         width: double.infinity,
                         child:
-                            _cameraDiretion == null
+                            (_cameraDiretion == null || _selectedModel == null)
                                 ? Center(
                                   child: ElevatedButton(
                                     onPressed: cameraSelect,
-                                    child: const Text('Select Camera'),
+                                    child: const Text('Select Camera & Model'),
                                   ),
                                 )
-                                : CameraXView(cameraFacing: _cameraDiretion!),
+                                : CameraXView(
+                                  cameraFacing: _cameraDiretion!,
+                                  model: _selectedModel == "word",
+                                ),
                       ),
                     ),
                 Padding(
                   padding: const EdgeInsets.all(10.0),
                   child: ElevatedButton.icon(
                     onPressed:
-                        (_cameraDiretion == null)
+                        (_cameraDiretion == null || _selectedModel == null)
                             ? null
                             : !_isStreaming
                             ? () async {
@@ -189,10 +205,7 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: const Color(0xFF7E22CE),
-                  ),
+                  icon: const Icon(Icons.arrow_back, color: Color(0xFF7E22CE)),
                   onPressed: widget.onBack ?? () => Navigator.of(context).pop(),
                 ),
                 SizedBox(height: 2),

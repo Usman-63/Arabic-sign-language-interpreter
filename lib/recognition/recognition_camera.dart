@@ -30,7 +30,12 @@ class RecognitionCameraXController {
 
 class CameraXView extends StatefulWidget {
   final String cameraFacing;
-  const CameraXView({super.key, required this.cameraFacing});
+  final bool model;
+  const CameraXView({
+    super.key,
+    required this.cameraFacing,
+    required this.model,
+  });
 
   @override
   State<CameraXView> createState() => _CameraXViewState();
@@ -76,7 +81,10 @@ class _CameraXViewState extends State<CameraXView> {
         if (snapshot.data == true) {
           return AndroidView(
             viewType: 'camerax_view',
-            creationParams: {'cameraFacing': widget.cameraFacing},
+            creationParams: {
+              'cameraFacing': widget.cameraFacing,
+              "model": widget.model,
+            },
             creationParamsCodec: const StandardMessageCodec(),
           );
         } else {

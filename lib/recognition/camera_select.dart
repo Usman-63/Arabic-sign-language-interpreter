@@ -16,7 +16,6 @@ class SelectCamera extends StatelessWidget {
             title: const Text('Front Camera'),
             onTap: () {
               onCameraSelected("front");
-              Navigator.of(context).pop();
             },
           ),
           ListTile(
@@ -24,7 +23,6 @@ class SelectCamera extends StatelessWidget {
             title: const Text('Back Camera'),
             onTap: () {
               onCameraSelected("back");
-              Navigator.of(context).pop();
             },
           ),
         ],

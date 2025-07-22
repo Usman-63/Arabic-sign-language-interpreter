@@ -12,13 +12,15 @@ import com.google.mediapipe.tasks.core.Delegate
 import com.google.mediapipe.tasks.vision.core.RunningMode
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarker
 import com.google.mediapipe.tasks.vision.handlandmarker.HandLandmarkerResult
+import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarker
+import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarkerResult
 
 class LandMarkHelper(
     var runningMode: RunningMode = RunningMode.LIVE_STREAM,
     val context: Context,
     val handLandmarkerHelperListener: LandmarkerListener? = null,
-
-) {
+    var modelSelection: Boolean,
+    ) {
 
     var minHandDetectionConfidence: Float = DEFAULT_HAND_DETECTION_CONFIDENCE
     var minHandTrackingConfidence: Float = DEFAULT_HAND_TRACKING_CONFIDENCE
@@ -26,27 +28,37 @@ class LandMarkHelper(
     var maxNumHands: Int = DEFAULT_NUM_HANDS
     var currentDelegate: Int = DELEGATE_CPU
 
-    private var aggregatedResult = AggregatedResult()
+    private var aggregatedResult = AggregatedResult(modelSelection)
      private val lock = Any()
 
     private var handLandmarker: HandLandmarker? = null
+    private var poseLandmarker: PoseLandmarker? = null
 
     @Volatile
     var isActive = false
 
     init {
         setupHandLandmarker()
-    }
-
-     fun clearHandLandmarker() {
-        synchronized(lock) {
-            handLandmarker?.close()
-            handLandmarker = null
-            isActive=false
+        if(modelSelection){
+            setupPoseLandmarker()
         }
     }
 
+     fun clearLandmarker() {
+        synchronized(lock) {
+            handLandmarker?.close()
+            handLandmarker = null
+            if(modelSelection)
+            {poseLandmarker?.close()
+            poseLandmarker=null}
+            isActive = false
+
+        }
+    }
+
+
     fun isClose(): Boolean {
+        if(modelSelection) return poseLandmarker==null && handLandmarker == null
         return handLandmarker == null
     }
 
@@ -77,33 +89,66 @@ class LandMarkHelper(
         handLandmarker = HandLandmarker.createFromOptions(context, optionsBuilder.build())
         isActive=true
     }
+   fun setupPoseLandmarker() {
+    val baseOptionBuilder = BaseOptions.builder().setModelAssetPath(MP_POSE_LANDMARKER_TASK)
+
+    when (currentDelegate) {
+        DELEGATE_CPU -> baseOptionBuilder.setDelegate(Delegate.CPU)
+        DELEGATE_GPU -> baseOptionBuilder.setDelegate(Delegate.GPU)
+    }
+
+    val optionsBuilder = PoseLandmarker.PoseLandmarkerOptions.builder()
+        .setBaseOptions(baseOptionBuilder.build())
+        .setRunningMode(runningMode)
+
+    if (runningMode == RunningMode.LIVE_STREAM) {
+        requireNotNull(handLandmarkerHelperListener) { "handLandmarkerHelperListener must be set when runningMode is LIVE_STREAM." }
+        optionsBuilder
+            .setResultListener(this::onPoseResult)
+            .setErrorListener(this::returnLivestreamError)
+    }
+
+    poseLandmarker = PoseLandmarker.createFromOptions(context, optionsBuilder.build())
+}
+
+private fun onPoseResult(result: PoseLandmarkerResult, input: MPImage) {
+    if (!isActive) return
+    aggregatedResult.poseResult = result
+    checkAndEmitCombinedResult()
+}
 
 
     fun detectLiveStream(imageProxy: ImageProxy, isFrontCamera: Boolean) {
         synchronized(lock) {
-            if (!isActive || handLandmarker == null) {
+            if (!isActive || handLandmarker == null || (modelSelection && poseLandmarker == null)) {
                 imageProxy.close()
                 return
             }
-            if (runningMode != RunningMode.LIVE_STREAM) throw IllegalArgumentException("detectLiveStream requires LIVE_STREAM mode")
             try {
                 val frameTime = SystemClock.uptimeMillis()
-
                 val bitmapBuffer = Bitmap.createBitmap(imageProxy.width, imageProxy.height, Bitmap.Config.ARGB_8888)
                 bitmapBuffer.copyPixelsFromBuffer(imageProxy.planes[0].buffer)
-
                 val matrix = Matrix().apply {
                     postRotate(imageProxy.imageInfo.rotationDegrees.toFloat())
                     if (isFrontCamera) postScale(-1f, 1f)
                 }
-
                 val rotatedBitmap = Bitmap.createBitmap(bitmapBuffer, 0, 0, bitmapBuffer.width, bitmapBuffer.height, matrix, true)
                 val mpImage = BitmapImageBuilder(rotatedBitmap).build()
 
                 aggregatedResult.inputImage = mpImage
                 aggregatedResult.timestamp = frameTime
 
-                handLandmarker?.detectAsync(mpImage, frameTime)
+                if (modelSelection) {
+                    // Run both detectors on the same frame
+                        handLandmarker?.detectAsync(mpImage, frameTime)
+                        poseLandmarker?.detectAsync(mpImage, frameTime)
+                   
+                } else {
+                    // Run only hand detector
+                    handLandmarker?.detectAsync(mpImage, frameTime)
+                   
+}
+
             } catch (e: Exception) {
                 print(e)
             } finally {
@@ -112,13 +157,14 @@ class LandMarkHelper(
         }
     }
 
+
     private fun onHandResult(result: HandLandmarkerResult, input: MPImage) {
         if (!isActive) return
         aggregatedResult.handResult = result
-        checkAndEmitCombinedResult()
+        checkAndEmitHandResult()
     }
 
-    private fun checkAndEmitCombinedResult() {
+    private fun checkAndEmitHandResult() {
         if (!aggregatedResult.isComplete()) return
 
         val handLandmarks = aggregatedResult.handResult?.landmarks()?.firstOrNull()?.flatMap { landmark ->
@@ -131,23 +177,50 @@ class LandMarkHelper(
         handLandmarkerHelperListener?.onResults(
             ResultBundle(
                 handLandmarks,
+                emptyList(),
                 inferenceTime,
                 aggregatedResult.inputImage?.height ?: 0,
                 aggregatedResult.inputImage?.width ?: 0
             )
         )
 
-        aggregatedResult = AggregatedResult()
+        aggregatedResult = AggregatedResult(modelSelection)
+    }
+
+    private fun checkAndEmitCombinedResult() {
+        if (!aggregatedResult.isComplete()) return
+
+        val handLandmarks = aggregatedResult.handResult?.landmarks()?.firstOrNull()?.flatMap { landmark ->
+            listOf(landmark.x(), landmark.y(), landmark.z())
+        } ?: List(21 * 3) { 0.0f }
+
+        val poseLandmarks = aggregatedResult.poseResult?.landmarks()?.firstOrNull()?.flatMap { landmark ->
+            listOf(landmark.x(), landmark.y(), landmark.z())
+        } ?: emptyList<Float>()
+
+        val inferenceTime = SystemClock.uptimeMillis() - aggregatedResult.timestamp
+
+        handLandmarkerHelperListener?.onResults(
+            ResultBundle(
+                handLandmarks,
+                poseLandmarks,
+                inferenceTime,
+                aggregatedResult.inputImage?.height ?: 0,
+                aggregatedResult.inputImage?.width ?: 0
+            )
+        )
+
+        aggregatedResult = AggregatedResult(modelSelection)
     }
 
     private fun returnLivestreamError(error: RuntimeException) {
-        handLandmarkerHelperListener?.onError(error.message ?: "Unknown error")
+        handLandmarkerHelperListener?.onError(error.message ?: "Unknown error", OTHER_ERROR)
     }
 
 
     companion object {
         private const val MP_HAND_LANDMARKER_TASK = "hand_landmarker.task"
-      //  private const val MP_POSE_LANDMARKER_TASK = "pose_landmarker.task"
+        private const val MP_POSE_LANDMARKER_TASK = "pose_landmarker.task"
 
         const val DELEGATE_CPU = 0
         const val DELEGATE_GPU = 1
@@ -160,6 +233,7 @@ class LandMarkHelper(
 
     data class ResultBundle(
         val landmarks: List<Float>,
+        val poseLandmarks: List<Float>,
         val inferenceTime: Long,
         val inputImageHeight: Int,
         val inputImageWidth: Int
@@ -171,12 +245,19 @@ class LandMarkHelper(
     }
 
     data class AggregatedResult(
-
+        var modelSelection: Boolean,
         var handResult: HandLandmarkerResult? = null,
+        var poseResult: PoseLandmarkerResult? = null,
         var inputImage: MPImage? = null,
         var timestamp: Long = 0
     ) {
-        fun isComplete() = handResult != null
+        fun isComplete(): Boolean {
+            return if (modelSelection) {
+                handResult != null && poseResult != null
+            } else {
+                handResult != null
+            }
+        }
     }
 
 
