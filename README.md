@@ -8,6 +8,14 @@ Real-time Arabic Sign Language recognition system with two models:
 Both exported to TensorFlow Lite and integrated into a Flutter/Kotlin mobile app using **MethodChannel** and **CameraX**.
 
 ---
+## Demo
+| Alphabet Demo | Main Screen | Quiz Screen |
+| :---: | :---: | :---: |
+| <img src="https://github.com/user-attachments/assets/7fbf5def-8523-4016-b53f-49adbb43e016" width="250"> | <img src="https://github.com/user-attachments/assets/9c50d80d-a990-45a7-a994-ff7e723ed2ae" width="250"> | <img src="https://github.com/user-attachments/assets/e92bbf7b-3740-4cc0-80f3-f3a9e58c3243" width="250"> |
+
+| Quiz Screen | Phrase Screen | App Demo |
+| :---: | :---: | :---: |
+| <img src="https://github.com/user-attachments/assets/feb79cf7-15ae-414f-bc33-51c309141b41" width="250"> | <img src="https://github.com/user-attachments/assets/ee875ae3-0551-48fd-bc04-d7173a131e38" width="250"> | <video  src="https://github.com/user-attachments/assets/4dd65778-bcce-4703-a51c-a8a3baee0d6a" width="150"> |
 
 ## 📂 Project Structure
 
@@ -28,12 +36,12 @@ Both exported to TensorFlow Lite and integrated into a Flutter/Kotlin mobile app
 
 ```mermaid
 flowchart LR
-    F[Flutter UI] -->|MethodChannel (start/stop)| A[CameraXView (Kotlin)]
-    A --> B[CameraX (Preview + Analyzer)]
-    B --> C[LandMarkHelper (MediaPipe)]
-    C --> D[ModelRecognize (TFLite Inference)]
-    D -->|label + confidence| A
-    A -->|onResults() invokeMethod| F
+  FlutterUI -->|start or stop| CameraXView
+  CameraXView --> CameraX
+  CameraX --> MediaPipe
+  MediaPipe --> ModelRecognize
+  ModelRecognize -->|label and confidence| CameraXView
+  CameraXView -->|onResults| FlutterUI
 ```
 
 ### Steps
@@ -59,7 +67,14 @@ flowchart LR
 ### Word Model
 - Input: 30 × 162 features (hand + pose per frame, 30 frames)
 - Notebook: `WordTraining.ipynb`
-- Output: `[1,30,162]` → temporal sequence model (LSTM)
+- Output: `[1,30,162]` → Softmax Classifier
+
+
+
+## Confusion Matrix
+| Alphabet CM | Phrases CM |
+| :---: | :---: |
+| <img width="500" height="989" alt="image" src="https://github.com/user-attachments/assets/4d163e70-7283-459c-821a-b0a35257408e" /> | <img src="https://github.com/user-attachments/assets/f4f6e568-4da4-4528-ab13-3c0e4206acfa" width="500"> |
 
 ---
 
