@@ -37,7 +37,10 @@ class _RecognitionScreenState extends State<RecognitionScreen> {
           _recognizedSignLabel =
               result['label']?.toString() ?? 'No sign recognized';
 
-          _recognizedSignConfidence = result['confidence']?.toString() ?? 'N/A';
+          _recognizedSignConfidence =
+              result['confidence'] != null
+                  ? "${(result['confidence'] * 100).toStringAsFixed(1)}%"
+                  : 'N/A';
         });
       }
     });

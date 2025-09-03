@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:sign_language_interpreter/background_icons.dart'; // <-- Add this import
+import 'package:flutter/services.dart';
+import 'package:sign_language_interpreter/videoplayer.dart';
+import 'package:sign_language_interpreter/background_icons.dart';
 
 class PhrasesScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -11,70 +15,16 @@ class PhrasesScreen extends StatefulWidget {
 
 class _PhrasesScreenState extends State<PhrasesScreen>
     with TickerProviderStateMixin {
-  late AnimationController _animationController;
+  List<dynamic> _phrases = [];
+  bool _loading = true;
   String _selectedCategory = 'All';
 
-  final List<Map<String, String>> phrases = const [
-    {
-      'english': 'Salam',
-      'arabic':
-          '\u0627\u0644\u0633\u0644\u0627\u0645 \u0639\u0644\u064a\u0643\u0645', // السلام عليكم
-      'category': 'Greetings',
-    },
-    {
-      'english': 'I Am Sorry',
-      'arabic': '\u0623\u0646\u0627 \u0622\u0633\u0641', // أنا آسف
-      'category': 'Courtesy',
-    },
-    {
-      'english': 'Good Evening',
-      'arabic': '\u0645\u0633\u0627\u0621 \u0627\u0644\u062e\u064a\u0631',
-      'category': 'Greetings',
-    },
-    {
-      'english': 'Thank You',
-      'arabic': '\u0634\u0643\u0631\u0627\u064b',
-      'category': 'Courtesy',
-    },
-    {
-      'english': 'Please',
-      'arabic': '\u0645\u0646 \u0641\u0636\u0644\u0643',
-      'category': 'Courtesy',
-    },
-    {
-      'english': 'I Am Fine',
-      'arabic': '\u0623\u0646\u0627 \u0628\u062e\u064a\u0631', // أنا بخير
-      'category': 'Emotions',
-    },
-    {
-      'english': 'Alhamdulillah',
-      'arabic':
-          '\u0627\u0644\u062d\u0645\u062f \u0644\u0644\u0647', // الحمد لله
-      'category': 'Emotions',
-    },
-    {
-      'english': 'What?',
-      'arabic': '\u0645\u0627\u0632\u0627\u061f',
-      'category': 'Questions',
-    }, // ماذا؟
-    {
-      'english': 'Come Here',
-      'arabic':
-          '\u062a\u0639\u0627\u0644 \u0625\u0644\u0649 \u0647\u0646\u0627', // تعال إلى هنا
-      'category': 'Basic',
-    },
-    {
-      'english': 'How are you?',
-      'arabic': '\u0643\u064a\u0641 \u062d\u0627\u0644\u0643\u061f',
-      'category': 'Questions',
-    },
-  ];
+  late AnimationController _animationController;
 
   final List<String> categories = [
     'All',
     'Greetings',
     'Courtesy',
-    'Emotions',
     'Basic',
     'Questions',
   ];
@@ -87,6 +37,7 @@ class _PhrasesScreenState extends State<PhrasesScreen>
       vsync: this,
     );
     _animationController.forward();
+    _loadPhrases();
   }
 
   @override
@@ -95,24 +46,31 @@ class _PhrasesScreenState extends State<PhrasesScreen>
     super.dispose();
   }
 
-  List<Map<String, String>> get filteredPhrases {
+  Future<void> _loadPhrases() async {
+    final jsonString = await rootBundle.loadString('assets/quiz_json.json');
+    final jsonData = json.decode(jsonString);
+    setState(() {
+      _phrases = jsonData['phrases'];
+      _loading = false;
+    });
+  }
+
+  List<Map<String, dynamic>> get filteredPhrases {
     if (_selectedCategory == 'All') {
-      return phrases;
+      return List<Map<String, dynamic>>.from(_phrases);
     }
-    return phrases
-        .where((phrase) => phrase['category'] == _selectedCategory)
+    return _phrases
+        .where((phrase) => phrase['category_display'] == _selectedCategory)
+        .cast<Map<String, dynamic>>()
         .toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final double letterFontSize = size.width / 25;
-    final double nameFontSize = size.width / 30;
     return Scaffold(
       body: Stack(
         children: [
-          // Decorative icons behind everything
           BackgroundIcons(
             icons: [
               BackgroundIconData(
@@ -125,7 +83,6 @@ class _PhrasesScreenState extends State<PhrasesScreen>
               ),
             ],
           ),
-          // Main content
           CustomScrollView(
             slivers: [
               SliverAppBar(
@@ -134,7 +91,6 @@ class _PhrasesScreenState extends State<PhrasesScreen>
                   onPressed:
                       widget.onBack ?? () => Navigator.of(context).maybePop(),
                 ),
-
                 expandedHeight:
                     size.height >= 800
                         ? size.height * 0.18
@@ -151,7 +107,6 @@ class _PhrasesScreenState extends State<PhrasesScreen>
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      // Gradient background
                       Container(
                         decoration: const BoxDecoration(
                           gradient: LinearGradient(
@@ -161,7 +116,6 @@ class _PhrasesScreenState extends State<PhrasesScreen>
                           ),
                         ),
                       ),
-                      // Decorative icons for the app bar
                       BackgroundIcons(
                         icons: [
                           BackgroundIconData(
@@ -190,7 +144,6 @@ class _PhrasesScreenState extends State<PhrasesScreen>
                           ),
                         ],
                       ),
-                      // Optional: subtle overlay for depth
                       Container(color: Colors.black.withOpacity(0.04)),
                     ],
                   ),
@@ -256,8 +209,7 @@ class _PhrasesScreenState extends State<PhrasesScreen>
                         title: Text(
                           phrase['english']!,
                           style: TextStyle(
-                            fontSize:
-                                letterFontSize, // Use dynamic font size for English
+                            fontSize: size.width / 25,
                             fontWeight: FontWeight.bold,
                             color: const Color(0xFF7E22CE),
                           ),
@@ -265,11 +217,24 @@ class _PhrasesScreenState extends State<PhrasesScreen>
                         subtitle: Text(
                           phrase['arabic']!,
                           style: TextStyle(
-                            fontSize:
-                                nameFontSize, // Use dynamic font size for Arabic
+                            fontSize: size.width / 30,
                             color: const Color(0xFF5B21B6),
                           ),
                         ),
+                        trailing: const Icon(
+                          Icons.play_circle_fill,
+                          color: Color(0xFF7E22CE),
+                        ),
+                        onTap:
+                            () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder:
+                                    (_) => PhraseVideoPlayer(
+                                      title: phrase['english']!,
+                                      videoUrl: phrase['video_path']!,
+                                    ),
+                              ),
+                            ),
                       ),
                     );
                   }, childCount: filteredPhrases.length),

@@ -22,7 +22,7 @@ class SelectModel extends StatelessWidget {
                   onChanged: (value) => setState(() => selectedModel = value),
                 ),
                 RadioListTile<String>(
-                  title: const Text('Word'),
+                  title: const Text('Phrase'),
                   value: 'word',
                   groupValue: selectedModel,
                   onChanged: (value) => setState(() => selectedModel = value),

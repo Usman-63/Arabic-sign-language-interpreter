@@ -85,31 +85,9 @@ class _AlphabetScreenState extends State<AlphabetScreen>
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
+                            child: Image.asset(
                               images[selectedIndex],
-                              fit: BoxFit.contain,
-                              loadingBuilder: (
-                                context,
-                                child,
-                                loadingProgress,
-                              ) {
-                                if (loadingProgress == null) return child;
-                                return SizedBox(
-                                  height: 200,
-                                  child: Center(
-                                    child: CircularProgressIndicator(
-                                      value:
-                                          loadingProgress.expectedTotalBytes !=
-                                                  null
-                                              ? loadingProgress
-                                                      .cumulativeBytesLoaded /
-                                                  loadingProgress
-                                                      .expectedTotalBytes!
-                                              : null,
-                                    ),
-                                  ),
-                                );
-                              },
+                              fit: BoxFit.cover,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -127,7 +105,7 @@ class _AlphabetScreenState extends State<AlphabetScreen>
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
+                                    child: Image.asset(
                                       images[index],
                                       width: 48,
                                       height: 48,

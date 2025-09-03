@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sign_language_interpreter/background_icons.dart'; // Add this import
+import 'package:sign_language_interpreter/graph/graph_screen.dart';
 import 'package:sign_language_interpreter/home/app_bar_header.dart';
 import 'package:sign_language_interpreter/home/feature_card.dart';
-import 'package:sign_language_interpreter/home/graph_screen.dart';
 import '../alphabets/alphabet_screen.dart';
 import '../phrases/phrases_screen.dart';
 import '../Quizzes/quiz_screen.dart';
@@ -26,8 +26,7 @@ class _HomeScreenState extends State<HomeScreen>
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
-    );
-    _animationController.forward();
+    )..forward();
   }
 
   @override
@@ -39,32 +38,48 @@ class _HomeScreenState extends State<HomeScreen>
   void _onNavigate(int index) {
     setState(() {
       _selectedIndex = index;
-      _animationController.reset();
-      _animationController.forward();
+      _animationController
+        ..reset()
+        ..forward();
     });
+  }
+
+  Future<bool> _onWillPop() async {
+    if (_selectedIndex != 0) {
+      setState(() => _selectedIndex = 0); // go back to Home
+      return false; // prevent app exit
+    }
+    return true; // allow system to close app on Home
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> pages = [
+    final pages = [
       HomeContent(onNavigate: _onNavigate),
-      AlphabetScreen(onBack: () => _onNavigate(0)), // Pass onBack
+      AlphabetScreen(onBack: () => _onNavigate(0)),
       PhrasesScreen(onBack: () => _onNavigate(0)),
       QuizScreen(onBack: () => _onNavigate(0)),
       RecognitionScreen(onBack: () => _onNavigate(0)),
     ];
-    return Scaffold(
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 400),
-        transitionBuilder: (child, animation) {
-          return SlideTransition(
-            position: animation.drive(
-              Tween(begin: const Offset(1.0, 0.0), end: Offset.zero),
-            ),
-            child: child,
-          );
-        },
-        child: pages[_selectedIndex],
+
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        body: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 400),
+          transitionBuilder:
+              (child, animation) => SlideTransition(
+                position: animation.drive(
+                  Tween(begin: const Offset(1.0, 0.0), end: Offset.zero),
+                ),
+                child: child,
+              ),
+          child: KeyedSubtree(
+            // helps AnimatedSwitcher distinguish pages
+            key: ValueKey(_selectedIndex),
+            child: pages[_selectedIndex],
+          ),
+        ),
       ),
     );
   }
@@ -73,14 +88,22 @@ class _HomeScreenState extends State<HomeScreen>
 // Home Content Widget
 class HomeContent extends StatefulWidget {
   final void Function(int) onNavigate;
-  const HomeContent({super.key, required this.onNavigate});
+
+  HomeContent({super.key, required this.onNavigate});
 
   @override
   State<HomeContent> createState() => _HomeContentState();
 }
 
 class _HomeContentState extends State<HomeContent> {
+  final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0.0;
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,6 +153,7 @@ class _HomeContentState extends State<HomeContent> {
               return false;
             },
             child: CustomScrollView(
+              controller: _scrollController,
               slivers: [
                 SliverAppBar(
                   expandedHeight:
@@ -310,10 +334,21 @@ class _HomeContentState extends State<HomeContent> {
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 8, bottom: 8),
-                      child: Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: 60,
-                        color: Colors.deepPurple.withOpacity(0.5),
+                      child: GestureDetector(
+                        onTap: () {
+                          // Scroll down by 200 pixels if content available
+                          final newOffset = _scrollController.offset + 200;
+                          _scrollController.animateTo(
+                            newOffset,
+                            duration: const Duration(milliseconds: 400),
+                            curve: Curves.easeInOut,
+                          );
+                        },
+                        child: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 60,
+                          color: Colors.deepPurple.withOpacity(0.5),
+                        ),
                       ),
                     ),
                   ),
@@ -333,7 +368,7 @@ class _HomeContentState extends State<HomeContent> {
                         horizontal: 20,
                         vertical: 18,
                       ),
-                      child: spidergraph,
+                      child: SpiderGraphWeakestAreas(),
                     ),
                   ),
                 ),
